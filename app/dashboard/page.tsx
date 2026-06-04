@@ -12,8 +12,12 @@ import {
   MonthlyRevenueChart,
   StatusDistributionChart,
 } from "@/components/charts";
+import { ExportCsvButton } from "@/components/export-csv-button";
+import { formatCurrency } from "@/utils/currency";
 
-type Payment = {
+export const dynamic = "force-dynamic";
+
+export type Payment = {
   id_pago: string;
   importe: number;
   estado: string;
@@ -46,10 +50,14 @@ export default async function DashboardPage() {
 
   const completed = allPayments?.filter((p) => p.estado?.toUpperCase() === "COMPLETED") ?? [];
   const refundedCount = allPayments?.filter((p) => p.estado?.toUpperCase() === "REFUNDED").length ?? 0;
-  const totalRevenue = completed.reduce((acc, p) => acc + p.importe, 0);
   const successfulPayments = completed.length;
-  const averageTicket =
-    successfulPayments > 0 ? Math.round(totalRevenue / successfulPayments) : 0;
+
+  const revenueByCurrency = new Map<string, number>();
+  const countByCurrency = new Map<string, number>();
+  for (const p of completed) {
+    revenueByCurrency.set(p.moneda, (revenueByCurrency.get(p.moneda) ?? 0) + p.importe);
+    countByCurrency.set(p.moneda, (countByCurrency.get(p.moneda) ?? 0) + 1);
+  }
 
   const monthlyMap = new Map<string, number>();
   for (const p of completed) {
@@ -77,18 +85,27 @@ export default async function DashboardPage() {
         </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm text-muted-foreground font-medium">
-                Ingresos Totales
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold tracking-tight">
-                ${totalRevenue.toLocaleString("es-AR")}
-              </p>
-            </CardContent>
-          </Card>
+          {[...revenueByCurrency.entries()].map(([moneda, total]) => {
+            const count = countByCurrency.get(moneda) ?? 0;
+            const avg = count > 0 ? Math.round(total / count) : 0;
+            return (
+              <Card key={moneda}>
+                <CardHeader>
+                  <CardTitle className="text-sm text-muted-foreground font-medium">
+                    Ingresos ({moneda})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-4xl font-bold tracking-tight">
+                    {formatCurrency(total, moneda)}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Ticket promedio: {formatCurrency(avg, moneda)}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
           <Card>
             <CardHeader>
               <CardTitle className="text-sm text-muted-foreground font-medium">
@@ -98,18 +115,6 @@ export default async function DashboardPage() {
             <CardContent>
               <p className="text-4xl font-bold tracking-tight">
                 {successfulPayments}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm text-muted-foreground font-medium">
-                Ticket Promedio
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold tracking-tight">
-                ${averageTicket.toLocaleString("es-AR")}
               </p>
             </CardContent>
           </Card>
@@ -145,7 +150,6 @@ export default async function DashboardPage() {
                 <TableHead>Email</TableHead>
                 <TableHead>Curso</TableHead>
                 <TableHead>Importe</TableHead>
-                <TableHead>Moneda</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Fecha</TableHead>
               </TableRow>
@@ -157,8 +161,8 @@ export default async function DashboardPage() {
                   <TableCell>{p.nombre ?? "—"}</TableCell>
                   <TableCell>{p.email ?? "—"}</TableCell>
                   <TableCell>{p.curso}</TableCell>
-                  <TableCell>${Number(p.importe).toLocaleString("es-AR")}</TableCell>
-                  <TableCell>{p.moneda}</TableCell>
+                  <TableCell>{formatCurrency(Number(p.importe), p.moneda)}</TableCell>
+
                   <TableCell>
                     <span
                       className={
