@@ -38,7 +38,11 @@ Si deseas ejecutar este proyecto en tu entorno local:
 
 2. Asegúrate de tener las variables de entorno configuradas en un archivo .env en la raíz del projecto
 
-3. Instalar dependencias con pnpm install
+3. Instalar dependencias con el comando:
+
+```bash  
+ pnpm install
+```
 
 4. Correr con el comando:
 
