@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -9,25 +10,51 @@ export default async function DashboardPage() {
     .eq("estado", "COMPLETED");
 
   if (error) {
-    return <p className="text-red-500">Error al cargar datos: {error.message}</p>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="w-96">
+          <CardContent className="pt-6 text-center text-destructive">
+            Error al cargar datos: {error.message}
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const totalRevenue = payments?.reduce((acc, p) => acc + Number(p.importe), 0) ?? 0;
   const successfulPayments = payments?.length ?? 0;
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">Dashboard de Pagos</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="rounded-xl border p-6 bg-white shadow-sm">
-          <p className="text-sm text-gray-500">Ingresos Totales</p>
-          <p className="text-3xl font-bold mt-1">
-            ${totalRevenue.toLocaleString("es-AR")}
-          </p>
-        </div>
-        <div className="rounded-xl border p-6 bg-white shadow-sm">
-          <p className="text-sm text-gray-500">Pagos Exitosos</p>
-          <p className="text-3xl font-bold mt-1">{successfulPayments}</p>
+    <div className="min-h-screen p-8">
+      <div className="mx-auto max-w-4xl">
+        <h1 className="mb-8 text-3xl font-heading font-bold tracking-tight">
+          Dashboard de Pagos
+        </h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm text-muted-foreground font-medium">
+                Ingresos Totales
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-bold tracking-tight">
+                ${totalRevenue.toLocaleString("es-AR")}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm text-muted-foreground font-medium">
+                Pagos Exitosos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-bold tracking-tight">
+                {successfulPayments}
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
